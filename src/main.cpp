@@ -32,18 +32,13 @@ int main()
 
   while (cin >> item_id)
   {
-    if (item_id == "End")
+    if (item_id == "End" || item_id == "end")
       break;
 
     try
     {
       cin >> col >> mov;
       update(board, item_id, height, col, mov);
-    }
-    catch (const char *msg)
-    {
-      string str(msg);
-      error(str);
     }
     catch (string msg)
     {
@@ -92,7 +87,8 @@ void update(Board &board, string item_id, int height, int col, int mov)
   const bool haveOutOfBound = board.checkOutOfBound();
   if (haveOutOfBound)
   {
-    throw "Item out of the board (game over)";
+    string str = "Item out of the board (game over)";
+    throw str;
   }
   info("Out of Bound Checking ended");
 }

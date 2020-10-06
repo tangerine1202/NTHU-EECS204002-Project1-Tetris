@@ -43,7 +43,7 @@ namespace tetrix
         block[1] = std::make_pair(1, 0);
         block[2] = std::make_pair(2, 0);
         block[3] = std::make_pair(3, 0);
-        info("'T1' item created");
+        info("'I1' item created");
       }
       else if (item_id == "I2")
       {
@@ -51,7 +51,7 @@ namespace tetrix
         block[1] = std::make_pair(0, 1);
         block[2] = std::make_pair(0, 2);
         block[3] = std::make_pair(0, 3);
-        info("'T1' item created");
+        info("'I2' item created");
       }
       else if (item_id == "O")
       {
@@ -59,7 +59,7 @@ namespace tetrix
         block[1] = std::make_pair(0, 1);
         block[2] = std::make_pair(1, 0);
         block[3] = std::make_pair(1, 1);
-        info("'T1' item created");
+        info("'O' item created");
       }
       else
       {
