@@ -24,7 +24,7 @@ namespace tetrix
   class Piece
   {
   private:
-    DataType preprocess(string bin_in_string)
+    DataType preprocess(const string bin_in_string)
     {
       DataType res(bin_in_string);
       res <<= (maxm - 4);
@@ -34,7 +34,7 @@ namespace tetrix
   public:
     Point ref;
     DataType block[4];
-    Piece(string item_id, int row, int col) : ref(row, col)
+    Piece(const string item_id, const int row, const int col) : ref(row, col)
     {
       if (item_id == "T1")
       {
@@ -194,7 +194,7 @@ namespace tetrix
         throw str;
       }
     };
-    string get_ref_str()
+    const string get_ref_str() const
     {
       string str = "(" + to_string(this->ref.first) + ", " + to_string(this->ref.second) + ")";
       return str;

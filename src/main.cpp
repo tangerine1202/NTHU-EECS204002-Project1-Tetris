@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
     info("input manually");
     info("output file: " + output_file_name);
 
-    info("'cin.rdbuf' to from 'cin'");
+    info("'cin.rdbuf' to 'cin'");
 
     fout.open(output_file_name, fstream::out);
 
@@ -130,7 +130,7 @@ int test(ofstream &fout)
   return 0;
 }
 
-void move_piece(Board &board, Piece &piece, int shift)
+void move_piece(Board &board, Piece &piece, const int shift)
 {
   board.down_piece(piece);
 

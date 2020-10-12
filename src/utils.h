@@ -1,7 +1,8 @@
 #ifndef UTILS_H
 #define UTILS_H
+
 // enable debug mode
-#define DEBUG_MODE
+// #define DEBUG_MODE
 
 #include <iostream>
 #include <string>

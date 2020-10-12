@@ -35,7 +35,7 @@ namespace tetrix
 
   public:
     Board(){};
-    Board(int height, int width)
+    Board(const int height, const int width)
         : height(height),
           width(width),
           need_update_height(height + 5)
@@ -44,21 +44,21 @@ namespace tetrix
     };
     // move_piece main fn
     int down_piece(Piece &piece);
-    int shift_piece(Piece &piece, int shift);
-    int set_piece(Piece &piece);
+    int shift_piece(Piece &piece, const int shift);
+    int set_piece(const Piece &piece);
     // move_piece support fn
-    bool isValidRef(Piece &item, Point next_ref);
-    bool checkHorizontalBound(const Piece &piece, const int row, const int shift);
+    bool isValidRef(const Piece &item, const Point next_ref);
+    bool checkHorizontalBound(const Piece &piece, const int source_row, const int shift);
 
     // update_board main fn
     int update();
     // update_board  supoort fn
-    bool can_fit_into(int source_line_idx, int target_line_idx);
-    int fit_into(int source_line_idx, int target_line_idx);
+    bool can_fit_into(const int source_line_idx, const int target_line_idx);
+    int fit_into(const int source_line_idx, const int target_line_idx);
 
     // cshow board in console
-    void show(int indicate_row = -1);
-    void show_more(int indicate_row);
+    void show(const int indicate_row = -1);
+    void show_more(const int indicate_row);
 
     // write output into file
     void write_in_file(ofstream &fout);
@@ -72,6 +72,14 @@ namespace tetrix
     info("start to down piece");
 
     Point next_ref(piece.ref.first, piece.ref.second);
+
+    // check init point
+    const bool isInitRefValid = this->isValidRef(piece, piece.ref);
+    if (!isInitRefValid)
+    {
+      string err_msg = "init ref " + piece.get_ref_str() + " is invalid";
+      throw err_msg;
+    }
 
     while (next_ref.first - 1 >= 0)
     {
@@ -92,50 +100,51 @@ namespace tetrix
     piece.ref = next_ref;
     info("piece down stop at " + piece.get_ref_str());
 
-    // show_board(*this);
+    // this->show();;
 
     return 0;
   }
 
-  int Board::shift_piece(Piece &piece, int shift)
+  int Board::shift_piece(Piece &piece, const int shift)
   {
     info("start to shift piece");
 
     Point next_ref(piece.ref.first, piece.ref.second);
-    const bool shift_right = shift > 0 ? true : false;
+    int shift_cnt = shift;
+    const bool shift_right = shift_cnt > 0 ? true : false;
 
-    while (shift != 0)
+    while (shift_cnt != 0)
     {
       // shift one block
       next_ref.second += (shift_right ? 1 : -1);
-      shift += (shift_right ? -1 : 1);
+      shift_cnt += (shift_right ? -1 : 1);
 
       const bool isValidRef = this->isValidRef(piece, next_ref);
       if (!isValidRef)
       {
         // Since this line is invalid, rollback last move.
         next_ref.second -= (shift_right ? 1 : -1);
-        shift -= (shift_right ? -1 : 1);
+        shift_cnt -= (shift_right ? -1 : 1);
         break;
       }
     }
 
     // Should be able to shift 'shift' times
-    if (shift != 0)
+    if (shift_cnt != 0)
     {
-      string str = "Failed to shift item. '" + to_string(shift) + "' times remained";
+      string str = "Failed to shift item. '" + to_string(shift_cnt) + "' times remained";
       throw str;
     }
 
     piece.ref = next_ref;
     info("piece shift '" + (string)(shift_right ? "right" : "left") + "' and stop at " + piece.get_ref_str());
 
-    // show_board(*this);
+    // this->show();;
 
     return 0;
   }
 
-  int Board::set_piece(Piece &piece)
+  int Board::set_piece(const Piece &piece)
   {
     for (int i = 0; i < 4; i++)
     {
@@ -161,7 +170,7 @@ namespace tetrix
    * Only check **horizontal** bound.
    * Vertical bound check after eliminating finished.
    */
-  bool Board::isValidRef(Piece &piece, Point next_ref)
+  bool Board::isValidRef(const Piece &piece, const Point next_ref)
   {
     bool result = true;
     for (int i = 0; i < 4; i++)
@@ -196,25 +205,19 @@ namespace tetrix
     return result;
   }
 
-  bool Board::checkHorizontalBound(const Piece &piece, const int row, const int shift)
+  bool Board::checkHorizontalBound(const Piece &piece, const int source_row, const int shift)
   {
-
-    debug("row: " + to_string(row));
-    debug("shift: " + to_string(shift));
-
     bool res = true;
-    // check left bound
-    // may remove out of left bound block
-    DataType left_bound_removed_tmp = piece.block[row] >> shift;
-    DataType left_bound_removed_data = left_bound_removed_tmp >> this->width;
+
+    // Check left bound
+    // remove out of left bound block
+    const DataType left_bound_removed_tmp = piece.block[source_row] >> shift;
+    const DataType left_bound_removed_data = left_bound_removed_tmp >> this->width;
     // not remove out of left bound block
-    DataType left_tmp = piece.block[row] >> this->width;
-    DataType left_data = left_tmp >> shift;
+    const DataType left_tmp = piece.block[source_row] >> this->width;
+    const DataType left_data = left_tmp >> shift;
 
-    debug("left data:               " + left_data.to_string().substr(0, this->width * 2));
-    debug("left bound removed data: " + left_bound_removed_data.to_string().substr(0, this->width * 2));
-
-    const bool isOutOfLeftBound = (left_data != left_bound_removed_data);
+    const bool isOutOfLeftBound = (left_data != left_bound_removed_data) || (shift < 0);
     if (isOutOfLeftBound)
     {
       debug("Out of left bound.");
@@ -223,20 +226,26 @@ namespace tetrix
 
     // check right bound
     // not remove out of right bound block
-    DataType right_data = piece.block[row] >> shift;
-    // may remove out of right bound block
-    DataType right_bound_removed_tmp = right_data >> (maxm - this->width);
-    DataType right_bound_removed_data = right_bound_removed_tmp << (maxm - this->width);
+    const DataType right_data = piece.block[source_row] >> shift;
+    // remove out of right bound block
+    const DataType right_bound_removed_tmp = right_data >> (maxm - this->width);
+    const DataType right_bound_removed_data = right_bound_removed_tmp << (maxm - this->width);
 
-    debug("right data:               " + right_data.to_string().substr(0, this->width * 2));
-    debug("right bound removed data: " + right_bound_removed_data.to_string().substr(0, this->width * 2));
-
-    const bool isOutOfRightBound = (right_data != right_bound_removed_data);
+    const bool isOutOfRightBound = (right_data != right_bound_removed_data) || (shift >= this->width);
     if (isOutOfRightBound)
     {
       debug("Out of right bound.");
       res = false;
     }
+
+    // /*
+    debug("source_row: " + to_string(source_row));
+    debug("shift: " + to_string(shift));
+    debug("left data:               " + left_data.to_string().substr(0, this->width * 2));
+    debug("left bound removed data: " + left_bound_removed_data.to_string().substr(0, this->width * 2));
+    debug("right data:               " + right_data.to_string().substr(0, this->width * 2));
+    debug("right bound removed data: " + right_bound_removed_data.to_string().substr(0, this->width * 2));
+    // */
 
     return res;
   }
@@ -300,7 +309,7 @@ namespace tetrix
     {
       string err_msg = "Out of bound. Block stack to '" + to_string(updated_height) + "' height";
       error(err_msg);
-      // show_board(*this);
+      // this->show();;
       throw err_msg;
     }
 
@@ -317,7 +326,7 @@ namespace tetrix
     return 0;
   }
 
-  bool Board::can_fit_into(int source_line_idx, int target_line_idx)
+  bool Board::can_fit_into(const int source_line_idx, const int target_line_idx)
   {
     const DataType source_data = this->board[source_line_idx];
     const DataType target_data = this->board[target_line_idx];
@@ -335,7 +344,7 @@ namespace tetrix
     return res;
   }
 
-  int Board::fit_into(int source_line_idx, int target_line_idx)
+  int Board::fit_into(const int source_line_idx, const int target_line_idx)
   {
     // TODO: check overlaping!
     this->board[target_line_idx] ^= this->board[source_line_idx];
@@ -346,8 +355,9 @@ namespace tetrix
     return 0;
   }
 
-  void Board::show(int indicate_row)
+  void Board::show(const int indicate_row)
   {
+#ifdef DEBUG_MODE
     cout << '\n';
     for (int i = this->height - 1; i >= 0; i--)
     {
@@ -357,11 +367,13 @@ namespace tetrix
       cout << '\n';
     }
     cout << '\n';
+#endif
   }
 
   // show needUpdateHeight board
-  void Board::show_more(int indicate_row = -1)
+  void Board::show_more(const int indicate_row = -1)
   {
+#ifdef DEBUG_MODE
     cout << '\n';
     for (int i = this->need_update_height - 1; i >= height; i--)
     {
@@ -383,6 +395,7 @@ namespace tetrix
       cout << '\n';
     }
     cout << '\n';
+#endif
   }
 
   void Board::write_in_file(ofstream &fout)
