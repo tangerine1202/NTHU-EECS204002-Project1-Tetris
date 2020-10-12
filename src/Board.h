@@ -5,6 +5,7 @@
 #include <vector>
 #include <stack>
 #include <string>
+#include <fstream>
 #include "Piece.h"
 #include "Utils.h"
 #include "Type.h"
@@ -15,6 +16,7 @@ extern const int maxm = 40 + 5;
 namespace tetrix
 {
   using std::cout;
+  using std::fstream;
   using std::string;
   using std::to_string;
   using std::vector;
@@ -54,17 +56,12 @@ namespace tetrix
     bool can_fit_into(int source_line_idx, int target_line_idx);
     int fit_into(int source_line_idx, int target_line_idx);
 
-    // int findEliminate(int prev_eliminate_row);
-    // int eliminateLine(int row);
-    // int fallInLine(int row);
-
-    // bool isItemInBoard(Piece &item);
-    // bool canEliminateLine(int row);
-    // bool checkOutOfBound();
-
-    // void show();
+    // cshow board in console
     void show(int indicate_row = -1);
     void show_more(int indicate_row);
+
+    // write output into file
+    void write_in_file(fstream &fout);
   };
 
   /**
@@ -94,6 +91,8 @@ namespace tetrix
 
     piece.ref = next_ref;
     info("piece down stop at " + piece.get_ref_str());
+
+    // show_board(*this);
 
     return 0;
   }
@@ -130,6 +129,8 @@ namespace tetrix
 
     piece.ref = next_ref;
     info("piece shift '" + (string)(shift_right ? "right" : "left") + "' and stop at " + piece.get_ref_str());
+
+    // show_board(*this);
 
     return 0;
   }
@@ -173,14 +174,13 @@ namespace tetrix
 
       // Only check **horizontal** bound.
       // TODO: check horizontal bound
-      /*
+
       const bool isInHorizontalBound = this->checkHorizontalBound(piece, source_row, shift);
       if (!isInHorizontalBound)
       {
         result = false;
         break;
       }
-      */
 
       if ((source_data & target_data) != 0)
       {
@@ -198,8 +198,11 @@ namespace tetrix
 
   bool Board::checkHorizontalBound(const Piece &piece, const int row, const int shift)
   {
+    /*
     debug("row: " + to_string(row));
     debug("shift: " + to_string(shift));
+    */
+
     bool res = true;
     // check left bound
     // may remove out of left bound block
@@ -208,7 +211,13 @@ namespace tetrix
     // not remove out of left bound block
     DataType left_tmp = piece.block[row] >> this->width;
     DataType left_data = left_tmp >> shift;
-    const bool isOutOfLeftBound = (left_data == left_bound_removed_data);
+
+    /*
+    debug("left data:               " + left_data.to_string().substr(0, this->width * 2));
+    debug("left bound removed data: " + left_bound_removed_data.to_string().substr(0, this->width * 2));
+    */
+
+    const bool isOutOfLeftBound = (left_data != left_bound_removed_data);
     if (isOutOfLeftBound)
     {
       debug("Out of left bound.");
@@ -216,10 +225,18 @@ namespace tetrix
     }
 
     // check right bound
+    // not remove out of right bound block
     DataType right_data = piece.block[row] >> shift;
-    DataType right_bound_removed_tmp = right_data >> this->width;
-    DataType right_bound_removed_data = right_data << this->width;
-    const bool isOutOfRightBound = (right_data == right_bound_removed_data);
+    // may remove out of right bound block
+    DataType right_bound_removed_tmp = right_data >> (maxm - this->width);
+    DataType right_bound_removed_data = right_bound_removed_tmp << (maxm - this->width);
+
+    /*
+    debug("right data:               " + right_data.to_string().substr(0, this->width * 2));
+    debug("right bound removed data: " + right_bound_removed_data.to_string().substr(0, this->width * 2));
+    */
+
+    const bool isOutOfRightBound = (right_data != right_bound_removed_data);
     if (isOutOfRightBound)
     {
       debug("Out of right bound.");
@@ -288,8 +305,7 @@ namespace tetrix
     {
       string err_msg = "Out of bound. Block stack to '" + to_string(updated_height) + "' height";
       error(err_msg);
-      debug("result as following:");
-      this->show();
+      // show_board(*this);
       throw err_msg;
     }
 
@@ -335,17 +351,6 @@ namespace tetrix
     return 0;
   }
 
-  /*
-  bool Board::checkOutOfBound()
-  {
-    for (int i = this->height; i < this->needUpdateHeight; i++)
-      for (int j = 0; j < this->width; j++)
-        if (this->board[i][j] != 0)
-          return true;
-    return false;
-  }
-  */
-
   void Board::show(int indicate_row)
   {
     cout << '\n';
@@ -383,6 +388,15 @@ namespace tetrix
       cout << '\n';
     }
     cout << '\n';
+  }
+
+  void Board::write_in_file(fstream &fout)
+  {
+    for (int i = this->height - 1; i >= 0; i--)
+    {
+      fout << this->board[i].to_string().substr(0, width);
+      fout << '\n';
+    }
   }
 
 } // namespace tetrix
