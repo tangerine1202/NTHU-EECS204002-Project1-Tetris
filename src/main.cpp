@@ -2,47 +2,66 @@
 #include <vector>
 #include <string>
 #include "Board.h"
-#include "Shape.h"
-#include "utils.h"
+#include "Piece.h"
+#include "Utils.h"
+#include "Type.h"
 
 using namespace std;
-using std::cout;
-using std::pair;
-using std::string;
-using std::to_string;
 using tetrix::Board;
-using tetrix::Shape;
+using tetrix::Piece;
 using utils::debug;
 using utils::error;
 using utils::info;
 using utils::warning;
 
-void update(Board &board, string item_id, int height, int col, int mov);
+// void init(Board &board, int height, int width);
+void move_piece(Board &board, Piece &piece, int shift);
+void update_board(Board &board);
 
 int main()
 {
   int height;
   int width;
   string item_id;
-  int col, mov;
+  int col, shift;
+  // Board board;
 
   // init
   cin >> height >> width;
   Board board(height, width);
+  // init(board, height, width);
 
   while (cin >> item_id)
   {
     if (item_id == "End" || item_id == "end")
       break;
 
+    if (item_id == "show")
+    {
+      board.show();
+      continue;
+    }
+
     try
     {
-      cin >> col >> mov;
-      update(board, item_id, height, col, mov);
+      // WARN: row & col start from 1
+      cin >> col >> shift;
+      // col -= 1;
+
+      // init piece
+      // TODO: check all start col should in the board
+      Piece piece(item_id, height, col);
+
+      // piece movement
+      move_piece(board, piece, shift);
+
+      // line falling & eliminating
+      update_board(board);
     }
     catch (string msg)
     {
       error(msg);
+      // return 1;
     }
   }
 
@@ -51,44 +70,22 @@ int main()
   return 0;
 }
 
-void update(Board &board, string item_id, int height, int col, int mov)
+void move_piece(Board &board, Piece &piece, int shift)
 {
-  // 1. Create according Shape
-  // TODO: check all start col should in the board
-  Shape item(item_id, height, col);
+  board.down_piece(piece);
 
-  // 2. item fall down
-  info("Item first falling started");
-  board.fallItem(item);
-  info("Item first falling ended");
+  board.shift_piece(piece, shift);
 
-  // 3. item move horizontially
-  info("Item moving started");
-  board.moveItem(item, mov);
-  info("Item moving ended");
+  board.down_piece(piece);
 
-  // 4. item fall down again
-  info("Item second falling started");
-  board.fallItem(item);
-  info("Item second falling ended");
+  board.set_piece(piece);
+}
 
-  // 5. set item on board
-  info("Item setting started");
-  board.setItem(item);
-  info("Item setting ended");
+void update_board(Board &board)
+{
+  // calculate result & set to board
+  board.update();
 
-  // 6. fall line
-  info("Update board started");
-  board.findEliminate(0);
-  info("Update board ended");
-
-  // 7. check out of bound
-  info("Out of Bound Checking started");
-  const bool haveOutOfBound = board.checkOutOfBound();
-  if (haveOutOfBound)
-  {
-    string str = "Item out of the board (game over)";
-    throw str;
-  }
-  info("Out of Bound Checking ended");
+  debug("result as following");
+  board.show();
 }

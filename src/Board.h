@@ -3,12 +3,14 @@
 
 #include <iostream>
 #include <vector>
+#include <stack>
 #include <string>
-#include "Shape.h"
-#include "utils.h"
+#include "Piece.h"
+#include "Utils.h"
+#include "Type.h"
 
-const int maxn = 15 + 5;
-const int maxm = 40 + 5;
+extern const int maxn = 15 + 5;
+extern const int maxm = 40 + 5;
 
 namespace tetrix
 {
@@ -17,38 +19,48 @@ namespace tetrix
   using std::to_string;
   using std::vector;
   using utils::debug;
+  using utils::error;
   using utils::info;
   using utils::warning;
 
   class Board
   {
   private:
-    vector<int> board[maxn];
+    vector<DataType> board;
     int height;
     int width;
-    int needUpdateHeight;
+    int need_update_height;
 
   public:
+    Board(){};
     Board(int height, int width)
         : height(height),
           width(width),
-          needUpdateHeight(height + 5)
+          need_update_height(height + 5)
     {
-      for (int i = 0; i < maxn; i++)
-        board[i] = vector<int>(maxm, 0);
+      board.resize(maxn, 0);
     };
-    int fallItem(Shape &itme);
-    int moveItem(Shape &item, int mov);
-    int setItem(Shape &item);
+    // move_piece main fn
+    int down_piece(Piece &piece);
+    int shift_piece(Piece &piece, int shift);
+    int set_piece(Piece &piece);
+    // move_piece support fn
+    bool isValidRef(Piece &item, Point next_ref);
+    bool checkHorizontalBound(const Piece &piece, const int row, const int shift);
 
-    int findEliminate(int prev_eliminate_row);
-    int eliminateLine(int row);
-    int fallInLine(int row);
+    // update_board main fn
+    int update();
+    // update_board  supoort fn
+    bool can_fit_into(int source_line_idx, int target_line_idx);
+    int fit_into(int source_line_idx, int target_line_idx);
 
-    bool isValidRef(Shape &item, Point next_ref);
-    bool isItemInBoard(Shape &item);
-    bool canEliminateLine(int row);
-    bool checkOutOfBound();
+    // int findEliminate(int prev_eliminate_row);
+    // int eliminateLine(int row);
+    // int fallInLine(int row);
+
+    // bool isItemInBoard(Piece &item);
+    // bool canEliminateLine(int row);
+    // bool checkOutOfBound();
 
     // void show();
     void show(int indicate_row = -1);
@@ -56,18 +68,22 @@ namespace tetrix
   };
 
   /**
-   * Item fall down until stuck.
+   * Piece fall down until stuck.
    */
-  int Board::fallItem(Shape &item)
+  int Board::down_piece(Piece &piece)
   {
-    Point next_ref(item.ref.first, item.ref.second);
+    info("start to down piece");
+
+    Point next_ref(piece.ref.first, piece.ref.second);
 
     while (next_ref.first - 1 >= 0)
     {
       // down one line
       next_ref.first--;
 
-      const bool isValidRef = this->isValidRef(item, next_ref);
+      debug("next_ref: (" + to_string(next_ref.first) + ", " + to_string(next_ref.second) + ")");
+
+      const bool isValidRef = this->isValidRef(piece, next_ref);
       if (!isValidRef)
       {
         // Since this line is invalid, rollback last fall down.
@@ -76,135 +92,66 @@ namespace tetrix
       }
     }
 
-    // update item position
-    item.ref = next_ref;
-    info("item fall stop at line: " + to_string(next_ref.first));
+    piece.ref = next_ref;
+    info("piece down stop at " + piece.get_ref_str());
 
     return 0;
   }
 
-  int Board::moveItem(Shape &item, int mov)
+  int Board::shift_piece(Piece &piece, int shift)
   {
-    debug("'mov' is " + to_string(mov));
+    info("start to shift piece");
 
-    Point next_ref(item.ref.first, item.ref.second);
-    const int moveDirection = mov > 0 ? 1 : -1;
+    Point next_ref(piece.ref.first, piece.ref.second);
+    const bool shift_right = shift > 0 ? true : false;
 
-    while (mov != 0 &&
-           next_ref.second + moveDirection >= 0 &&
-           next_ref.second + moveDirection <= this->width)
+    while (shift != 0)
     {
-      // move one block
-      next_ref.second += moveDirection;
-      mov -= moveDirection;
+      // shift one block
+      next_ref.second += (shift_right ? 1 : -1);
+      shift += (shift_right ? -1 : 1);
 
-      const bool isValidRef = this->isValidRef(item, next_ref);
+      const bool isValidRef = this->isValidRef(piece, next_ref);
       if (!isValidRef)
       {
         // Since this line is invalid, rollback last move.
-        next_ref.second -= moveDirection;
-        mov += moveDirection;
+        next_ref.second -= (shift_right ? 1 : -1);
+        shift -= (shift_right ? -1 : 1);
         break;
       }
     }
 
-    // Should be able to move 'mov' times
-    if (mov != 0)
+    // Should be able to shift 'shift' times
+    if (shift != 0)
     {
-      string str = "Failed to move item, " + to_string(mov) + " times remained";
+      string str = "Failed to shift item. '" + to_string(shift) + "' times remained";
       throw str;
     }
 
-    // update item position
-    item.ref = next_ref;
+    piece.ref = next_ref;
+    info("piece shift '" + (string)(shift_right ? "right" : "left") + "' and stop at " + piece.get_ref_str());
 
-    string direction_str = (moveDirection == 1 ? "right" : "left");
-    info("item move " + direction_str + " at col: " + to_string(next_ref.second));
     return 0;
   }
 
-  int Board::setItem(Shape &item)
+  int Board::set_piece(Piece &piece)
   {
     for (int i = 0; i < 4; i++)
     {
-      const int row = item.ref.first + item.block[i].first;
-      const int col = item.ref.second + item.block[i].second;
-      // TODO: +1 to check if there are double assign
-      this->board[row][col] += 1;
+      const int source_row = i;
+      const int target_row = piece.ref.first + i;
+      const int shift = piece.ref.second;
+      const DataType source_data = piece.block[source_row] >> shift;
+
+      // TODO: check if their is overlaping!
+      this->board[target_row] ^= source_data;
     }
 
-    debug("set item at " + item.getRefStr());
+    info("piece set at " + piece.get_ref_str());
+
+    debug("set piece result as following:");
     this->show();
 
-    return 0;
-  }
-
-  // Check board if can eliminate
-  int Board::findEliminate(int prev_eliminate_row)
-  {
-    debug("start findEliminate from line " + to_string(prev_eliminate_row));
-    this->show(prev_eliminate_row);
-
-    for (int row = prev_eliminate_row; row < this->needUpdateHeight; row++)
-    {
-      const bool canEliminateLine = this->canEliminateLine(row);
-      if (canEliminateLine)
-      {
-        this->eliminateLine(row);
-      }
-    }
-    return 0;
-  }
-
-  // eliminate line and fall line
-  int Board::eliminateLine(int row)
-  {
-    debug("eliminate line: " + to_string(row));
-
-    for (int i = row; i < this->needUpdateHeight; i++)
-    {
-      this->board[i] = this->board[i + 1];
-      this->show_more(i);
-    }
-
-    debug("eliminated");
-
-    this->fallInLine(row - 1);
-    return 0;
-  }
-
-  // Above line fit in current line(row)
-  int Board::fallInLine(int row)
-  {
-    // Can't fit in to -n line
-    if (row >= 0)
-    {
-      bool canFall = true;
-      for (int i = 0; i < this->width; i++)
-      {
-        if (this->board[row][i] && this->board[row + 1][i])
-        {
-          canFall = false;
-          break;
-        }
-      }
-
-      if (canFall)
-      {
-        info("Can fall line into: " + to_string(row));
-        debug("fall line: " + to_string(row));
-        for (int i = 0; i < this->width; i++)
-        {
-          this->board[row][i] = this->board[row][i] | this->board[row + 1][i];
-        }
-      }
-      else
-        info("Can't fall line " + to_string(row + 1) + " into line " + to_string(row));
-      this->findEliminate(row);
-    }
-
-    // FIXME: performance concern, this function call need review.
-    this->findEliminate(0);
     return 0;
   }
 
@@ -213,49 +160,182 @@ namespace tetrix
    * Only check **horizontal** bound.
    * Vertical bound check after eliminating finished.
    */
-  bool Board::isValidRef(Shape &item, Point next_ref)
+  bool Board::isValidRef(Piece &piece, Point next_ref)
   {
+    bool result = true;
     for (int i = 0; i < 4; i++)
     {
-      const int row = next_ref.first + item.block[i].first;
-      const int col = next_ref.second + item.block[i].second;
+      const int source_row = i;
+      const int target_row = next_ref.first + i;
+      const int shift = next_ref.second;
+      const DataType source_data = piece.block[source_row] >> shift;
+      const DataType target_data = this->board[target_row];
 
       // Only check **horizontal** bound.
-      const bool isInHorizontalBound = (col >= 0 && col < this->width);
+      // TODO: check horizontal bound
+      /*
+      const bool isInHorizontalBound = this->checkHorizontalBound(piece, source_row, shift);
+      if (!isInHorizontalBound)
+      {
+        result = false;
+        break;
+      }
+      */
 
-      if (this->board[row][col] || !isInHorizontalBound)
-        return false;
+      if ((source_data & target_data) != 0)
+      {
+        result = false;
+        break;
+      }
     }
 
-    string str = "item at (" + to_string(next_ref.first) + ", " + to_string(next_ref.second) + ") is valid.";
-    info(str);
+    string str = "piece at (" + to_string(next_ref.first) + ", " + to_string(next_ref.second) + ") " +
+                 "is " + (result ? "valid" : "invalid");
+    debug(str);
 
-    return true;
+    return result;
   }
 
-  bool Board::isItemInBoard(Shape &item)
+  bool Board::checkHorizontalBound(const Piece &piece, const int row, const int shift)
   {
-    for (int i = 0; i < 4; i++)
+    debug("row: " + to_string(row));
+    debug("shift: " + to_string(shift));
+    bool res = true;
+    // check left bound
+    // may remove out of left bound block
+    DataType left_bound_removed_tmp = piece.block[row] >> shift;
+    DataType left_bound_removed_data = left_bound_removed_tmp >> this->width;
+    // not remove out of left bound block
+    DataType left_tmp = piece.block[row] >> this->width;
+    DataType left_data = left_tmp >> shift;
+    const bool isOutOfLeftBound = (left_data == left_bound_removed_data);
+    if (isOutOfLeftBound)
     {
-      const int row = item.ref.first + item.block[i].first;
-      const int col = item.ref.second + item.block[i].second;
-      if (row < 0 || row >= this->width || col < 0 || col >= this->height)
-        return false;
+      debug("Out of left bound.");
+      res = false;
     }
-    return true;
+
+    // check right bound
+    DataType right_data = piece.block[row] >> shift;
+    DataType right_bound_removed_tmp = right_data >> this->width;
+    DataType right_bound_removed_data = right_data << this->width;
+    const bool isOutOfRightBound = (right_data == right_bound_removed_data);
+    if (isOutOfRightBound)
+    {
+      debug("Out of right bound.");
+      res = false;
+    }
+
+    return res;
   }
 
-  bool Board::canEliminateLine(int row)
+  int Board::update()
   {
-    for (int i = 0; i < this->width; i++)
+    int line_idx = 0;
+    // Store the line index of the line which have blocks. (Stack)
+    vector<int> s;
+
+    // 1. calculate state after falling and eliminating
+    DataType line_data;
+    for (; line_idx < this->need_update_height; line_idx++)
     {
-      if (this->board[row][i] == 0)
-        return false;
+      line_data = this->board[line_idx];
+
+      // skip full or empty line
+      if (line_data.count() == width || line_data.count() == 0)
+      {
+        debug("line '" + to_string(line_idx) + "' is empty or full, skip.");
+        continue;
+      }
+
+      // No line below current line
+      if (s.empty())
+      {
+        debug("s is empty, push line '" + to_string(line_idx) + "' into s");
+        s.push_back(line_idx);
+        continue;
+      }
+
+      debug("push line '" + to_string(line_idx) + "'");
+      s.push_back(line_idx);
+
+      /*
+      const bool can_fit_into = this->can_fit_into(line_idx, s.front());
+      if (can_fit_into)
+      {
+        // fit current line into s.top() line
+        this->fit_into(line_idx, s.front());
+
+        // fit_into then line is full
+        const bool isSTopFull = (this->board[s.front()].count() == width);
+        if (isSTopFull)
+        {
+          debug("s.top is full, pop.");
+          s.pop_back();
+        }
+      }
+      else
+      {
+        debug("push line '" + to_string(line_idx) + "'");
+        s.push_back(line_idx);
+      }
+      */
     }
-    info("Can eliminate row: " + to_string(row));
-    return true;
+
+    // 2. check vertical bound
+    const int updated_height = s.size();
+    if (updated_height > height)
+    {
+      string err_msg = "Out of bound. Block stack to '" + to_string(updated_height) + "' height";
+      error(err_msg);
+      debug("result as following:");
+      this->show();
+      throw err_msg;
+    }
+
+    // 3. update the board
+    for (int i = 0; i < updated_height; i++)
+      this->board[i] = this->board[s[i]];
+
+    // 4. clean above lines
+    for (int i = updated_height; i < need_update_height; i++)
+      this->board[i] = 0;
+
+    info("board updated");
+
+    return 0;
   }
 
+  bool Board::can_fit_into(int source_line_idx, int target_line_idx)
+  {
+    const DataType source_data = this->board[source_line_idx];
+    const DataType target_data = this->board[target_line_idx];
+    bool res;
+
+    if ((source_data & target_data) == 0)
+      res = true;
+    else
+      res = false;
+
+    debug("line '" + to_string(source_line_idx) + "'  " +
+          (res ? "can" : "can't") +
+          " fit into line '" + to_string(target_line_idx) + "'");
+
+    return res;
+  }
+
+  int Board::fit_into(int source_line_idx, int target_line_idx)
+  {
+    // TODO: check overlaping!
+    this->board[target_line_idx] ^= this->board[source_line_idx];
+
+    debug("fit line '" + to_string(source_line_idx) + "'  " +
+          "into line '" + to_string(target_line_idx) + "'");
+
+    return 0;
+  }
+
+  /*
   bool Board::checkOutOfBound()
   {
     for (int i = this->height; i < this->needUpdateHeight; i++)
@@ -264,16 +344,14 @@ namespace tetrix
           return true;
     return false;
   }
+  */
 
   void Board::show(int indicate_row)
   {
     cout << '\n';
     for (int i = this->height - 1; i >= 0; i--)
     {
-      for (int j = 0; j < this->width; j++)
-      {
-        cout << this->board[i][j] << ' ';
-      }
+      cout << this->board[i].to_string().substr(0, width);
       if (i == indicate_row)
         cout << "<-";
       cout << '\n';
@@ -285,12 +363,9 @@ namespace tetrix
   void Board::show_more(int indicate_row = -1)
   {
     cout << '\n';
-    for (int i = this->needUpdateHeight - 1; i >= height; i--)
+    for (int i = this->need_update_height - 1; i >= height; i--)
     {
-      for (int j = 0; j < this->width; j++)
-      {
-        cout << this->board[i][j] << ' ';
-      }
+      cout << this->board[i].to_string().substr(0, width);
       if (i == indicate_row)
         cout << "<-";
       cout << '\n';
@@ -302,10 +377,7 @@ namespace tetrix
 
     for (int i = this->height - 1; i >= 0; i--)
     {
-      for (int j = 0; j < this->width; j++)
-      {
-        cout << this->board[i][j] << ' ';
-      }
+      cout << this->board[i].to_string().substr(0, width);
       if (i == indicate_row)
         cout << "<-";
       cout << '\n';
