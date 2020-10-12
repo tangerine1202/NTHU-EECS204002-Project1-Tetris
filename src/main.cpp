@@ -15,33 +15,59 @@ using utils::error;
 using utils::info;
 using utils::warning;
 
-int test(fstream &fin, fstream &fout);
+int test(ofstream &fout);
 void move_piece(Board &board, Piece &piece, int shift);
 void update_board(Board &board);
 
 int main(int argc, char *argv[])
 {
-  if (argc != 3)
+  ifstream fin;
+  ofstream fout;
+  string input_file_name;
+  string output_file_name;
+  bool isInputFromFile;
+
+  // set I/O
+  if (argc <= 1)
   {
-    warning("Only one input file, one output file a time, get '" + to_string(argc - 1) + "'");
-    for (int i = 1; i < argc; i++)
-      warning("argv[" + to_string(i) + "]: " + argv[i]);
+    output_file_name = "output.txt";
+
+    info("input manually");
+    info("output file: " + output_file_name);
+
+    info("'cin.rdbuf' to from 'cin'");
+
+    fout.open(output_file_name, fstream::out);
+
+    if (!fout.is_open())
+      error("failed to open output file.");
+
+    isInputFromFile = false;
+  }
+  else
+  {
+    input_file_name = argv[1];
+    output_file_name = argc >= 3 ? argv[2] : input_file_name + "_output.txt";
+
+    info("input file: " + input_file_name);
+    info("output file: " + output_file_name);
+
+    fin.open(input_file_name, fstream::in);
+    fout.open(output_file_name, fstream::out);
+
+    if (!fin.is_open())
+      error("failed to open input file.");
+    cin.rdbuf(fin.rdbuf());
+    info("'cin.rdbuf' to from 'fin'");
+
+    if (!fout.is_open())
+      error("failed to open output file.");
+
+    isInputFromFile = true;
   }
 
-  fstream fin, fout;
-  const string input_file_name = argv[1];
-  const string output_file_name = argv[2];
-
-  fin.open(input_file_name, fstream::in);
-  fout.open(output_file_name, fstream::out);
-
-  if (fin.is_open())
-    error("failed to open input file.");
-  if (fout.is_open())
-    error("failed to open output file.");
-
-  if (fin.is_open() && fout.is_open())
-    test(fin, fout);
+  if (!isInputFromFile || (fin.is_open() && fout.is_open()))
+    test(fout);
 
   fin.close();
   fout.close();
@@ -49,7 +75,7 @@ int main(int argc, char *argv[])
   return 0;
 }
 
-int test(fstream &fin, fstream &fout)
+int test(ofstream &fout)
 {
   int height;
   int width;
@@ -57,10 +83,10 @@ int test(fstream &fin, fstream &fout)
   int col, shift;
 
   // init
-  fin >> height >> width;
+  cin >> height >> width;
   Board board(height, width);
 
-  while (fin >> item_id)
+  while (cin >> item_id)
   {
     if (item_id == "End" || item_id == "end")
     {
@@ -77,7 +103,7 @@ int test(fstream &fin, fstream &fout)
     try
     {
       // WARN: row & col start from 1
-      fin >> col >> shift;
+      cin >> col >> shift;
       col -= 1;
 
       // init piece
@@ -120,5 +146,5 @@ void update_board(Board &board)
   // calculate result & set to board
   board.update();
 
-  // show_board(board);
+  board.show();
 }

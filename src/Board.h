@@ -16,7 +16,7 @@ extern const int maxm = 40 + 5;
 namespace tetrix
 {
   using std::cout;
-  using std::fstream;
+  using std::ofstream;
   using std::string;
   using std::to_string;
   using std::vector;
@@ -61,7 +61,7 @@ namespace tetrix
     void show_more(int indicate_row);
 
     // write output into file
-    void write_in_file(fstream &fout);
+    void write_in_file(ofstream &fout);
   };
 
   /**
@@ -198,10 +198,9 @@ namespace tetrix
 
   bool Board::checkHorizontalBound(const Piece &piece, const int row, const int shift)
   {
-    /*
+
     debug("row: " + to_string(row));
     debug("shift: " + to_string(shift));
-    */
 
     bool res = true;
     // check left bound
@@ -212,10 +211,8 @@ namespace tetrix
     DataType left_tmp = piece.block[row] >> this->width;
     DataType left_data = left_tmp >> shift;
 
-    /*
     debug("left data:               " + left_data.to_string().substr(0, this->width * 2));
     debug("left bound removed data: " + left_bound_removed_data.to_string().substr(0, this->width * 2));
-    */
 
     const bool isOutOfLeftBound = (left_data != left_bound_removed_data);
     if (isOutOfLeftBound)
@@ -231,10 +228,8 @@ namespace tetrix
     DataType right_bound_removed_tmp = right_data >> (maxm - this->width);
     DataType right_bound_removed_data = right_bound_removed_tmp << (maxm - this->width);
 
-    /*
     debug("right data:               " + right_data.to_string().substr(0, this->width * 2));
     debug("right bound removed data: " + right_bound_removed_data.to_string().substr(0, this->width * 2));
-    */
 
     const bool isOutOfRightBound = (right_data != right_bound_removed_data);
     if (isOutOfRightBound)
@@ -390,7 +385,7 @@ namespace tetrix
     cout << '\n';
   }
 
-  void Board::write_in_file(fstream &fout)
+  void Board::write_in_file(ofstream &fout)
   {
     for (int i = this->height - 1; i >= 0; i--)
     {
