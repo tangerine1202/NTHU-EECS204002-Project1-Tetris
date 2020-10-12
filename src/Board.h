@@ -13,7 +13,7 @@
 extern const int maxn = 15 + 5;
 extern const int maxm = 40 + 5;
 
-namespace tetrix
+namespace tetris
 {
   using std::cout;
   using std::ofstream;
@@ -407,6 +407,6 @@ namespace tetrix
     }
   }
 
-} // namespace tetrix
+} // namespace tetris
 
 #endif

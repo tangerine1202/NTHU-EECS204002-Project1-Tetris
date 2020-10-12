@@ -8,8 +8,8 @@
 #include "Utils.h"
 
 using namespace std;
-using tetrix::Board;
-using tetrix::Piece;
+using tetris::Board;
+using tetris::Piece;
 using utils::debug;
 using utils::error;
 using utils::info;

@@ -10,7 +10,7 @@
 extern const int maxn;
 extern const int maxm;
 
-namespace tetrix
+namespace tetris
 {
   using std::cout;
   using std::pair;
@@ -200,6 +200,6 @@ namespace tetrix
       return str;
     }
   };
-} // namespace tetrix
+} // namespace tetris
 
 #endif
