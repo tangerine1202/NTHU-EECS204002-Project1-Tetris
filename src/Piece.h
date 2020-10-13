@@ -190,7 +190,7 @@ namespace tetris
       }
       else
       {
-        string str = "Failed to create Piece. Unknown item_id '" + item_id + "'";
+        string str = "Failed to create Piece. Unknown item_id '" + item_id + "'.";
         throw str;
       }
     };

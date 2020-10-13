@@ -47,8 +47,9 @@ namespace tetris
     int shift_piece(Piece &piece, const int shift);
     int set_piece(const Piece &piece);
     // move_piece support fn
-    bool isValidRef(const Piece &item, const Point next_ref);
-    bool checkHorizontalBound(const Piece &piece, const int source_row, const int shift);
+    bool isValidRef(const Piece &item, const Point &next_ref);
+    bool isNotOverlapping(const Piece &item, const Point &next_ref);
+    bool isInHorizontalBound(const Piece &piece, const Point &next_ref);
 
     // update_board main fn
     int update();
@@ -58,7 +59,7 @@ namespace tetris
 
     // cshow board in console
     void show(const int indicate_row = -1);
-    void show_more(const int indicate_row);
+    void show_more(const int indicate_row = -1);
 
     // write output into file
     void write_in_file(ofstream &fout);
@@ -88,8 +89,8 @@ namespace tetris
 
       debug("next_ref: (" + to_string(next_ref.first) + ", " + to_string(next_ref.second) + ")");
 
-      const bool isValidRef = this->isValidRef(piece, next_ref);
-      if (!isValidRef)
+      const bool isNotOverlapping = this->isNotOverlapping(piece, next_ref);
+      if (!isNotOverlapping)
       {
         // Since this line is invalid, rollback last fall down.
         next_ref.first++;
@@ -153,50 +154,27 @@ namespace tetris
       const int shift = piece.ref.second;
       const DataType source_data = piece.block[source_row] >> shift;
 
-      // TODO: check if their is overlaping!
       this->board[target_row] ^= source_data;
     }
 
     info("piece set at " + piece.get_ref_str());
-
-    debug("set piece result as following:");
-    this->show();
+    this->show_more();
 
     return 0;
   }
 
   /**
    * WARN:
-   * Only check **horizontal** bound.
-   * Vertical bound check after eliminating finished.
+   * NO upper bound checked.
    */
-  bool Board::isValidRef(const Piece &piece, const Point next_ref)
+  bool Board::isValidRef(const Piece &piece, const Point &next_ref)
   {
     bool result = true;
-    for (int i = 0; i < 4; i++)
-    {
-      const int source_row = i;
-      const int target_row = next_ref.first + i;
-      const int shift = next_ref.second;
-      const DataType source_data = piece.block[source_row] >> shift;
-      const DataType target_data = this->board[target_row];
 
-      // Only check **horizontal** bound.
-      // TODO: check horizontal bound
-
-      const bool isInHorizontalBound = this->checkHorizontalBound(piece, source_row, shift);
-      if (!isInHorizontalBound)
-      {
-        result = false;
-        break;
-      }
-
-      if ((source_data & target_data) != 0)
-      {
-        result = false;
-        break;
-      }
-    }
+    const bool isInHorizontalBound = this->isInHorizontalBound(piece, next_ref);
+    const bool isNotOverlapping = this->isNotOverlapping(piece, next_ref);
+    if (!isInHorizontalBound || !isNotOverlapping)
+      result = false;
 
     string str = "piece at (" + to_string(next_ref.first) + ", " + to_string(next_ref.second) + ") " +
                  "is " + (result ? "valid" : "invalid");
@@ -205,49 +183,92 @@ namespace tetris
     return result;
   }
 
-  bool Board::checkHorizontalBound(const Piece &piece, const int source_row, const int shift)
+  bool Board::isNotOverlapping(const Piece &piece, const Point &next_ref)
   {
-    bool res = true;
-
-    // Check left bound
-    // remove out of left bound block
-    const DataType left_bound_removed_tmp = piece.block[source_row] >> shift;
-    const DataType left_bound_removed_data = left_bound_removed_tmp >> this->width;
-    // not remove out of left bound block
-    const DataType left_tmp = piece.block[source_row] >> this->width;
-    const DataType left_data = left_tmp >> shift;
-
-    const bool isOutOfLeftBound = (left_data != left_bound_removed_data) || (shift < 0);
-    if (isOutOfLeftBound)
+    bool result = true;
+    for (int i = 0; i < 4; i++)
     {
-      debug("Out of left bound.");
-      res = false;
+      const int source_row = i;
+      const int target_row = next_ref.first + i;
+      const int target_col = next_ref.second;
+      const DataType source_data = piece.block[source_row] >> target_col;
+      const DataType target_data = this->board[target_row];
+
+      // check overlaping
+      if ((source_data & target_data) != 0)
+      {
+        result = false;
+        break;
+      }
     }
 
-    // check right bound
-    // not remove out of right bound block
-    const DataType right_data = piece.block[source_row] >> shift;
-    // remove out of right bound block
-    const DataType right_bound_removed_tmp = right_data >> (maxm - this->width);
-    const DataType right_bound_removed_data = right_bound_removed_tmp << (maxm - this->width);
+    string str = "piece at (" + to_string(next_ref.first) + ", " + to_string(next_ref.second) + ") " +
+                 (result ? "no overlapping occured" : "cause overlapping");
+    debug(str);
 
-    const bool isOutOfRightBound = (right_data != right_bound_removed_data) || (shift >= this->width);
-    if (isOutOfRightBound)
+    return result;
+  }
+
+  bool Board::isInHorizontalBound(const Piece &piece, const Point &next_ref)
+  {
+    bool result = true;
+
+    for (int i = 0; i < 4; i++)
     {
-      debug("Out of right bound.");
-      res = false;
+      const int source_row = i;
+      const int target_col = next_ref.second;
+
+      // Check left bound
+      // remove out of left bound block
+      const DataType left_bound_removed_tmp = piece.block[source_row] >> target_col;
+      const DataType left_bound_removed_data = left_bound_removed_tmp >> this->width;
+      // not remove out of left bound block
+      const DataType left_tmp = piece.block[source_row] >> this->width;
+      const DataType left_data = left_tmp >> target_col;
+
+      const bool isOutOfLeftBound = (left_data != left_bound_removed_data) || (target_col < 0);
+      if (isOutOfLeftBound)
+      {
+        debug("Out of left bound.");
+        result = false;
+      }
+
+      // Check right bound
+      // not remove out of right bound block
+      const DataType right_data = piece.block[source_row] >> target_col;
+      // remove out of right bound block
+      const DataType right_bound_removed_tmp = right_data >> (maxm - this->width);
+      const DataType right_bound_removed_data = right_bound_removed_tmp << (maxm - this->width);
+
+      const bool isOutOfRightBound = (right_data != right_bound_removed_data) || (target_col >= this->width);
+      if (isOutOfRightBound)
+      {
+        debug("Out of right bound.");
+        result = false;
+      }
+
+      if (!result)
+      {
+        /*
+      debug("source_row: " + to_string(source_row));
+      debug("shift: " + to_string(shift));
+      debug("left data:               " + left_data.to_string().substr(0, this->width * 2));
+      debug("left bound removed data: " + left_bound_removed_data.to_string().substr(0, this->width * 2));
+      debug("right data:               " + right_data.to_string().substr(0, this->width * 2));
+      debug("right bound removed data: " + right_bound_removed_data.to_string().substr(0, this->width * 2));
+      */
+        break;
+      }
     }
 
-    // /*
-    debug("source_row: " + to_string(source_row));
-    debug("shift: " + to_string(shift));
-    debug("left data:               " + left_data.to_string().substr(0, this->width * 2));
-    debug("left bound removed data: " + left_bound_removed_data.to_string().substr(0, this->width * 2));
-    debug("right data:               " + right_data.to_string().substr(0, this->width * 2));
-    debug("right bound removed data: " + right_bound_removed_data.to_string().substr(0, this->width * 2));
-    // */
+    if (result)
+    {
+      string str = "piece at (" + to_string(next_ref.first) + ", " + to_string(next_ref.second) + ") " +
+                   "is in the horizontal bound";
+      debug(str);
+    }
 
-    return res;
+    return result;
   }
 
   int Board::update()
@@ -303,13 +324,13 @@ namespace tetris
       */
     }
 
-    // 2. check vertical bound
+    // 2. check upper bound
     const int updated_height = s.size();
     if (updated_height > height)
     {
-      string err_msg = "Out of bound. Block stack to '" + to_string(updated_height) + "' height";
+      string err_msg = "Out of upper bound. Block stack to '" + to_string(updated_height) + "' height";
       error(err_msg);
-      // this->show();;
+      // this->show();
       throw err_msg;
     }
 
@@ -357,45 +378,44 @@ namespace tetris
 
   void Board::show(const int indicate_row)
   {
-#ifdef DEBUG_MODE
-    cout << '\n';
+    string output = "show board: \n";
+    output += '\n';
     for (int i = this->height - 1; i >= 0; i--)
     {
-      cout << this->board[i].to_string().substr(0, width);
+      output += this->board[i].to_string().substr(0, width);
       if (i == indicate_row)
-        cout << "<-";
-      cout << '\n';
+        output += "<-";
+      output += '\n';
     }
-    cout << '\n';
-#endif
+    info(output);
   }
 
   // show needUpdateHeight board
-  void Board::show_more(const int indicate_row = -1)
+  void Board::show_more(const int indicate_row)
   {
-#ifdef DEBUG_MODE
-    cout << '\n';
+    string output = "show more board: \n";
+    output += '\n';
     for (int i = this->need_update_height - 1; i >= height; i--)
     {
-      cout << this->board[i].to_string().substr(0, width);
+      output += this->board[i].to_string().substr(0, width);
       if (i == indicate_row)
-        cout << "<-";
-      cout << '\n';
+        output += "<-";
+      output += '\n';
     }
 
     for (int i = 0; i < this->width * 2; i++)
-      cout << '~';
-    cout << '\n';
+      output += '~';
+    output += '\n';
 
     for (int i = this->height - 1; i >= 0; i--)
     {
-      cout << this->board[i].to_string().substr(0, width);
+      output += this->board[i].to_string().substr(0, width);
       if (i == indicate_row)
-        cout << "<-";
-      cout << '\n';
+        output += "<-";
+      output += '\n';
     }
-    cout << '\n';
-#endif
+    output += '\n';
+    info(output);
   }
 
   void Board::write_in_file(ofstream &fout)
