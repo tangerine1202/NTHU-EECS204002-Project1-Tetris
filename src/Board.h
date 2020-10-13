@@ -60,6 +60,7 @@ namespace tetris
     // cshow board in console
     void show(const int indicate_row = -1);
     void show_more(const int indicate_row = -1);
+    void show_all(const int indicate_row = -1);
 
     // write output into file
     void write_in_file(ofstream &fout);
@@ -67,6 +68,9 @@ namespace tetris
 
   /**
    * Piece fall down until stuck.
+   * checking:
+   * - init ref overlapping check
+   * - down ref overlapping check
    */
   int Board::down_piece(Piece &piece)
   {
@@ -75,7 +79,7 @@ namespace tetris
     Point next_ref(piece.ref.first, piece.ref.second);
 
     // check init point
-    const bool isInitRefValid = this->isValidRef(piece, piece.ref);
+    const bool isInitRefValid = this->isNotOverlapping(piece, piece.ref);
     if (!isInitRefValid)
     {
       string err_msg = "init ref " + piece.get_ref_str() + " is invalid";
@@ -101,11 +105,14 @@ namespace tetris
     piece.ref = next_ref;
     info("piece down stop at " + piece.get_ref_str());
 
-    // this->show();;
-
     return 0;
   }
 
+  /**
+   * Piece shift horizontally until stuck.
+   * checking:
+   * - shift ref overlapping check
+  */
   int Board::shift_piece(Piece &piece, const int shift)
   {
     info("start to shift piece");
@@ -120,8 +127,8 @@ namespace tetris
       next_ref.second += (shift_right ? 1 : -1);
       shift_cnt += (shift_right ? -1 : 1);
 
-      const bool isValidRef = this->isValidRef(piece, next_ref);
-      if (!isValidRef)
+      const bool isNotOverlapping = this->isNotOverlapping(piece, next_ref);
+      if (!isNotOverlapping)
       {
         // Since this line is invalid, rollback last move.
         next_ref.second -= (shift_right ? 1 : -1);
@@ -139,8 +146,6 @@ namespace tetris
 
     piece.ref = next_ref;
     info("piece shift '" + (string)(shift_right ? "right" : "left") + "' and stop at " + piece.get_ref_str());
-
-    // this->show();;
 
     return 0;
   }
@@ -165,7 +170,8 @@ namespace tetris
 
   /**
    * WARN:
-   * NO upper bound checked.
+   * NO upper bound checked
+   * Only check overlapping & horizontal bound
    */
   bool Board::isValidRef(const Piece &piece, const Point &next_ref)
   {
@@ -284,7 +290,7 @@ namespace tetris
       line_data = this->board[line_idx];
 
       // skip full or empty line
-      if (line_data.count() == width || line_data.count() == 0)
+      if (line_data.count() >= width || line_data.count() == 0)
       {
         debug("line '" + to_string(line_idx) + "' is empty or full, skip.");
         continue;
@@ -330,7 +336,6 @@ namespace tetris
     {
       string err_msg = "Out of upper bound. Block stack to '" + to_string(updated_height) + "' height";
       error(err_msg);
-      // this->show();
       throw err_msg;
     }
 
@@ -382,7 +387,7 @@ namespace tetris
     output += '\n';
     for (int i = this->height - 1; i >= 0; i--)
     {
-      output += this->board[i].to_string().substr(0, width);
+      output += this->board[i].to_string().substr(0, this->width);
       if (i == indicate_row)
         output += "<-";
       output += '\n';
@@ -390,26 +395,58 @@ namespace tetris
     info(output);
   }
 
-  // show needUpdateHeight board
+  // show need_update_height * width board
   void Board::show_more(const int indicate_row)
   {
     string output = "show more board: \n";
     output += '\n';
-    for (int i = this->need_update_height - 1; i >= height; i--)
+    for (int i = this->need_update_height - 1; i >= this->height; i--)
     {
-      output += this->board[i].to_string().substr(0, width);
+      output += this->board[i].to_string().substr(0, this->width);
       if (i == indicate_row)
         output += "<-";
       output += '\n';
     }
 
-    for (int i = 0; i < this->width * 2; i++)
+    for (int i = 0; i < this->width; i++)
       output += '~';
     output += '\n';
 
     for (int i = this->height - 1; i >= 0; i--)
     {
-      output += this->board[i].to_string().substr(0, width);
+      output += this->board[i].to_string().substr(0, this->width);
+      if (i == indicate_row)
+        output += "<-";
+      output += '\n';
+    }
+    output += '\n';
+    info(output);
+  }
+
+  // show need_update_height * (width * 2) board
+  void Board::show_all(const int indicate_row)
+  {
+    string output = "show more board: \n";
+    output += '\n';
+    for (int i = this->need_update_height - 1; i >= this->height; i--)
+    {
+      output += this->board[i].to_string().substr(0, this->width);
+      output += "|";
+      output += this->board[i].to_string().substr(this->width, this->width);
+      if (i == indicate_row)
+        output += "<-";
+      output += '\n';
+    }
+
+    for (int i = 0; i < this->width * 2 + 1; i++)
+      output += '~';
+    output += '\n';
+
+    for (int i = this->height - 1; i >= 0; i--)
+    {
+      output += this->board[i].to_string().substr(0, this->width);
+      output += "|";
+      output += this->board[i].to_string().substr(this->width, this->width);
       if (i == indicate_row)
         output += "<-";
       output += '\n';

@@ -99,6 +99,16 @@ int test(ofstream &fout)
       board.show();
       continue;
     }
+    if (item_id == "show_more")
+    {
+      board.show_more();
+      continue;
+    }
+    if (item_id == "show_all")
+    {
+      board.show_all();
+      continue;
+    }
 
     try
     {
