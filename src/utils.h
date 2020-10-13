@@ -1,8 +1,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+// enable info messages
+#define VERBOSE
 // enable debug mode
-// #define DEBUG_MODE
+#define DEBUG_ENABLE
 
 #include <iostream>
 #include <string>
@@ -12,29 +14,42 @@ namespace utils
 
   using std::cout;
   using std::string;
+  using std::to_string;
 
-  void debug(string str)
+  /*
+   * color_code refer to https://www.wikiwand.com/en/ANSI_escape_code
+  */
+
+  void debug(const string str)
   {
-#ifdef DEBUG_MODE
-    cout << "[DEBUG] " << str << '\n';
+#if defined(VERBOSE) && defined(DEBUG_ENABLE)
+    string output;
+    output = "\033[35m[DEBUG]\033[0m " + str;
+    cout << output << '\n';
 #endif
   }
-  void info(string str)
+  void info(const string str)
   {
-#ifdef DEBUG_MODE
-    cout << "[INFO] " << str << '\n';
+#if defined(VERBOSE)
+    string output;
+    output = "\033[32m[INFO]\033[0m " + str;
+    cout << output << '\n';
 #endif
   }
-  void warning(string str)
+  void warning(const string str)
   {
-#ifdef DEBUG_MODE
-    cout << "[WARN] " << str << '\n';
+#if defined(VERBOSE)
+    string output;
+    output = "\033[93m[WARN]\033[0m " + str;
+    cout << output << '\n';
 #endif
   }
-  void error(string str)
+  void error(const string str)
   {
-#ifdef DEBUG_MODE
-    cout << "[ERROR] " << str << '\n';
+#if defined(VERBOSE)
+    string output;
+    output = "\033[91m[ERROR]\033[0m " + str;
+    cout << output << '\n';
 #endif
   }
 
