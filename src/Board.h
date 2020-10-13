@@ -381,6 +381,7 @@ namespace tetris
     return 0;
   }
 
+  // show board functions
   void Board::show(const int indicate_row)
   {
     string output = "show board: \n";
@@ -455,12 +456,13 @@ namespace tetris
     info(output);
   }
 
+  // write output into file
   void Board::write_in_file(ofstream &fout)
   {
     for (int i = this->height - 1; i >= 0; i--)
     {
-      fout << this->board[i].to_string().substr(0, width);
-      fout << '\n';
+      for (int j = maxm - 1; j >= maxm - this->width; j--)
+        fout << this->board[i][j] << " \n"[j == (maxm - this->width)];
     }
   }
 
