@@ -64,6 +64,8 @@ namespace tetris
 
     // write output into file
     void write_in_file(ofstream &fout);
+    // write output to console (without VERBOSE block)
+    void write_to_console();
   };
 
   /**
@@ -463,6 +465,15 @@ namespace tetris
     {
       for (int j = maxm - 1; j >= maxm - this->width; j--)
         fout << this->board[i][j] << " \n"[j == (maxm - this->width)];
+    }
+  }
+  // write output to console without VERBOSE block
+  void Board::write_to_console()
+  {
+    for (int i = this->height - 1; i >= 0; i--)
+    {
+      for (int j = maxm - 1; j >= maxm - this->width; j--)
+        cout << this->board[i][j] << " \n"[j == (maxm - this->width)];
     }
   }
 

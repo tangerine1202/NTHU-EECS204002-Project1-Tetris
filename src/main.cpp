@@ -136,9 +136,11 @@ int test(ofstream &fout)
     }
   }
 
-  board.show();
-
+#if defined(VERBOSE)
   board.write_in_file(fout);
+#endif
+
+  board.write_to_console();
 
   return 0;
 }
