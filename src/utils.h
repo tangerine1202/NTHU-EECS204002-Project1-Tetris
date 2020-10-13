@@ -4,7 +4,7 @@
 // enable info messages
 #define VERBOSE
 // enable debug mode
-#define DEBUG_ENABLE
+// #define DEBUG_ENABLE
 
 #include <iostream>
 #include <string>

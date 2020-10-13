@@ -140,7 +140,7 @@ namespace tetris
     // Should be able to shift 'shift' times
     if (shift_cnt != 0)
     {
-      string str = "Failed to shift item. '" + to_string(shift_cnt) + "' times remained";
+      string str = "Failed to shift item. '" + to_string(shift_cnt) + "' times remain.";
       throw str;
     }
 
