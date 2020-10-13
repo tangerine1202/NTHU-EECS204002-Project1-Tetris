@@ -57,8 +57,11 @@ int main(int argc, char *argv[])
 
     if (!fin.is_open())
       error("failed to open input file.");
-    cin.rdbuf(fin.rdbuf());
-    info("'cin.rdbuf' to from 'fin'");
+    else
+    {
+      cin.rdbuf(fin.rdbuf());
+      info("'cin.rdbuf' from 'fin'");
+    }
 
     if (!fout.is_open())
       error("failed to open output file.");

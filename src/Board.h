@@ -69,8 +69,8 @@ namespace tetris
   /**
    * Piece fall down until stuck.
    * checking:
-   * - init ref overlapping check
-   * - down ref overlapping check
+   * - init ref check
+   * - down ref check
    */
   int Board::down_piece(Piece &piece)
   {
@@ -79,7 +79,7 @@ namespace tetris
     Point next_ref(piece.ref.first, piece.ref.second);
 
     // check init point
-    const bool isInitRefValid = this->isNotOverlapping(piece, piece.ref);
+    const bool isInitRefValid = this->isValidRef(piece, piece.ref);
     if (!isInitRefValid)
     {
       string err_msg = "init ref " + piece.get_ref_str() + " is invalid";
@@ -93,8 +93,8 @@ namespace tetris
 
       debug("next_ref: (" + to_string(next_ref.first) + ", " + to_string(next_ref.second) + ")");
 
-      const bool isNotOverlapping = this->isNotOverlapping(piece, next_ref);
-      if (!isNotOverlapping)
+      const bool isValidRef = this->isValidRef(piece, next_ref);
+      if (!isValidRef)
       {
         // Since this line is invalid, rollback last fall down.
         next_ref.first++;
@@ -111,7 +111,7 @@ namespace tetris
   /**
    * Piece shift horizontally until stuck.
    * checking:
-   * - shift ref overlapping check
+   * - shift ref check
   */
   int Board::shift_piece(Piece &piece, const int shift)
   {
@@ -127,8 +127,8 @@ namespace tetris
       next_ref.second += (shift_right ? 1 : -1);
       shift_cnt += (shift_right ? -1 : 1);
 
-      const bool isNotOverlapping = this->isNotOverlapping(piece, next_ref);
-      if (!isNotOverlapping)
+      const bool isValidRef = this->isValidRef(piece, next_ref);
+      if (!isValidRef)
       {
         // Since this line is invalid, rollback last move.
         next_ref.second -= (shift_right ? 1 : -1);
