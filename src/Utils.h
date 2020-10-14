@@ -1,13 +1,13 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-// enable info messages
+#include <iostream>
+#include <string>
+
+// enable log messages
 #define VERBOSE
 // enable debug mode
 // #define DEBUG_ENABLE
-
-#include <iostream>
-#include <string>
 
 namespace utils
 {

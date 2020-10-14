@@ -10,6 +10,9 @@
 #include "Utils.h"
 #include "Type.h"
 
+// enable A_SOLUTION
+#define A_SOLUTION
+
 extern const int maxn = 15 + 5;
 extern const int maxm = 40 + 5;
 
@@ -47,20 +50,20 @@ namespace tetris
     int shift_piece(Piece &piece, const int shift);
     int set_piece(const Piece &piece);
     // move_piece support fn
-    bool isValidRef(const Piece &item, const Point &next_ref);
-    bool isNotOverlapping(const Piece &item, const Point &next_ref);
-    bool isInHorizontalBound(const Piece &piece, const Point &next_ref);
+    bool isValidRef(const Piece &item, const Point &next_ref) const;
+    bool isNotOverlapping(const Piece &item, const Point &next_ref) const;
+    bool isInHorizontalBound(const Piece &piece, const Point &next_ref) const;
 
     // update_board main fn
     int update();
     // update_board  supoort fn
-    bool can_fit_into(const int source_line_idx, const int target_line_idx);
+    bool can_fit_into(const int source_line_idx, const int target_line_idx) const;
     int fit_into(const int source_line_idx, const int target_line_idx);
 
     // cshow board in console
-    void show(const int indicate_row = -1);
-    void show_more(const int indicate_row = -1);
-    void show_all(const int indicate_row = -1);
+    void show(const int indicate_row = -1) const;
+    void show_more(const int indicate_row = -1) const;
+    void show_all(const int indicate_row = -1) const;
 
     // write output into file
     void write_in_file(ofstream &fout);
@@ -175,7 +178,7 @@ namespace tetris
    * NO upper bound checked
    * Only check overlapping & horizontal bound
    */
-  bool Board::isValidRef(const Piece &piece, const Point &next_ref)
+  bool Board::isValidRef(const Piece &piece, const Point &next_ref) const
   {
     bool result = true;
 
@@ -191,7 +194,7 @@ namespace tetris
     return result;
   }
 
-  bool Board::isNotOverlapping(const Piece &piece, const Point &next_ref)
+  bool Board::isNotOverlapping(const Piece &piece, const Point &next_ref) const
   {
     bool result = true;
     for (int i = 0; i < 4; i++)
@@ -217,7 +220,7 @@ namespace tetris
     return result;
   }
 
-  bool Board::isInHorizontalBound(const Piece &piece, const Point &next_ref)
+  bool Board::isInHorizontalBound(const Piece &piece, const Point &next_ref) const
   {
     bool result = true;
 
@@ -258,13 +261,13 @@ namespace tetris
       if (!result)
       {
         /*
-      debug("source_row: " + to_string(source_row));
-      debug("shift: " + to_string(shift));
-      debug("left data:               " + left_data.to_string().substr(0, this->width * 2));
-      debug("left bound removed data: " + left_bound_removed_data.to_string().substr(0, this->width * 2));
-      debug("right data:               " + right_data.to_string().substr(0, this->width * 2));
-      debug("right bound removed data: " + right_bound_removed_data.to_string().substr(0, this->width * 2));
-      */
+        debug("source_row: " + to_string(source_row));
+        debug("shift: " + to_string(shift));
+        debug("left data:               " + left_data.to_string().substr(0, this->width * 2));
+        debug("left bound removed data: " + left_bound_removed_data.to_string().substr(0, this->width * 2));
+        debug("right data:               " + right_data.to_string().substr(0, this->width * 2));
+        debug("right bound removed data: " + right_bound_removed_data.to_string().substr(0, this->width * 2));
+        */
         break;
       }
     }
@@ -306,30 +309,27 @@ namespace tetris
         continue;
       }
 
-      debug("push line '" + to_string(line_idx) + "'");
-      s.push_back(line_idx);
-
-      /*
-      const bool can_fit_into = this->can_fit_into(line_idx, s.front());
+#if defined(A_SOLUTION)
+      const bool can_fit_into = this->can_fit_into(line_idx, s.back());
       if (can_fit_into)
       {
         // fit current line into s.top() line
-        this->fit_into(line_idx, s.front());
+        this->fit_into(line_idx, s.back());
 
         // fit_into then line is full
-        const bool isSTopFull = (this->board[s.front()].count() == width);
+        const bool isSTopFull = (this->board[s.back()].count() == width);
         if (isSTopFull)
         {
           debug("s.top is full, pop.");
           s.pop_back();
         }
+
+        continue;
       }
-      else
-      {
-        debug("push line '" + to_string(line_idx) + "'");
-        s.push_back(line_idx);
-      }
-      */
+#endif
+
+      debug("push line '" + to_string(line_idx) + "'");
+      s.push_back(line_idx);
     }
 
     // 2. check upper bound
@@ -354,7 +354,7 @@ namespace tetris
     return 0;
   }
 
-  bool Board::can_fit_into(const int source_line_idx, const int target_line_idx)
+  bool Board::can_fit_into(const int source_line_idx, const int target_line_idx) const
   {
     const DataType source_data = this->board[source_line_idx];
     const DataType target_data = this->board[target_line_idx];
@@ -384,7 +384,7 @@ namespace tetris
   }
 
   // show board functions
-  void Board::show(const int indicate_row)
+  void Board::show(const int indicate_row) const
   {
     string output = "show board: \n";
     output += '\n';
@@ -399,7 +399,7 @@ namespace tetris
   }
 
   // show need_update_height * width board
-  void Board::show_more(const int indicate_row)
+  void Board::show_more(const int indicate_row) const
   {
     string output = "show more board: \n";
     output += '\n';
@@ -427,7 +427,7 @@ namespace tetris
   }
 
   // show need_update_height * (width * 2) board
-  void Board::show_all(const int indicate_row)
+  void Board::show_all(const int indicate_row) const
   {
     string output = "show more board: \n";
     output += '\n';

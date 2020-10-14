@@ -7,6 +7,13 @@
 #include "Piece.h"
 #include "Utils.h"
 
+// enable A_SOLUTION
+// at "src/Board.h"
+// enable log messages
+// at "src/Utils.h"
+// enable debug mode
+// at "src/Utils.h"
+
 using namespace std;
 using tetris::Board;
 using tetris::Piece;
@@ -30,41 +37,91 @@ int main(int argc, char *argv[])
   // set I/O
   if (argc <= 1)
   {
+#if defined(A_SOLUTION)
+    output_file_name = "output_A.final";
+#else
     output_file_name = "output.final";
+#endif
 
     info("input manually");
     info("output file: " + output_file_name);
 
     info("'cin.rdbuf' to 'cin'");
 
-    fout.open(output_file_name, fstream::out);
-
-    if (!fout.is_open())
-      error("failed to open output file.");
+    try
+    {
+      fout.open(output_file_name, ofstream::out);
+      if (!fout.is_open())
+      {
+        string err_msg = "failed to open output file.";
+        throw err_msg;
+      }
+    }
+    catch (string err_msg)
+    {
+      error(err_msg);
+    }
 
     isInputFromFile = false;
   }
   else
   {
     input_file_name = argv[1];
-    output_file_name = (argc >= 3 ? argv[2] : input_file_name) + ".final";
+    output_file_name = (argc >= 3 ? argv[2] : input_file_name);
+
+    // if there is no output file and input file extension is ".data", then change to ".final". Otherwise, append ".final" directly.
+    bool isInputFileEndWithData = true;
+    for (int i = 0; i < 5; i++)
+    {
+      if (input_file_name[input_file_name.length() - 1 - i] != ".data"[4 - i])
+        isInputFileEndWithData = false;
+    }
+    if (!(argc >= 3) && isInputFileEndWithData)
+    {
+      output_file_name = output_file_name.substr(0, output_file_name.length() - 5);
+#if defined(A_SOLUTION)
+      output_file_name += "_A.final";
+#else
+      output_file_name += ".final";
+#endif
+    }
+    else
+    {
+#if defined(A_SOLUTION)
+      output_file_name += "_A.final";
+#else
+      output_file_name += ".final";
+#endif
+    }
 
     info("input file: " + input_file_name);
     info("output file: " + output_file_name);
 
-    fin.open(input_file_name, fstream::in);
-    fout.open(output_file_name, fstream::out);
-
-    if (!fin.is_open())
-      error("failed to open input file.");
-    else
+    try
     {
-      cin.rdbuf(fin.rdbuf());
-      info("'cin.rdbuf' from 'fin'");
-    }
+      fin.open(input_file_name, ifstream::in);
+      if (!fin.is_open())
+      {
+        string err_msg = "failed to open input file.";
+        throw err_msg;
+      }
+      else
+      {
+        cin.rdbuf(fin.rdbuf());
+        info("'cin.rdbuf' from 'fin'");
+      }
 
-    if (!fout.is_open())
-      error("failed to open output file.");
+      fout.open(output_file_name, ofstream::out);
+      if (!fout.is_open())
+      {
+        string err_msg = "failed to open output file.";
+        throw err_msg;
+      }
+    }
+    catch (string err_msg)
+    {
+      error(err_msg);
+    }
 
     isInputFromFile = true;
   }
@@ -129,9 +186,9 @@ int test(ofstream &fout)
       // line falling & eliminating
       update_board(board);
     }
-    catch (string msg)
+    catch (string err_msg)
     {
-      error(msg);
+      error(err_msg);
       // return 1;
     }
   }
