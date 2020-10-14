@@ -42,7 +42,6 @@ namespace tetris
         block[2] = preprocess("0000");
         block[1] = preprocess("1110");
         block[0] = preprocess("0100");
-        info("'" + item_id + "' piece created");
       }
       else if (item_id == "T2")
       {
@@ -50,7 +49,6 @@ namespace tetris
         block[2] = preprocess("0100");
         block[1] = preprocess("1100");
         block[0] = preprocess("0100");
-        info("'" + item_id + "' piece created");
       }
       else if (item_id == "T3")
       {
@@ -58,7 +56,6 @@ namespace tetris
         block[2] = preprocess("0000");
         block[1] = preprocess("0100");
         block[0] = preprocess("1110");
-        info("'" + item_id + "' piece created");
       }
       else if (item_id == "T4")
       {
@@ -66,7 +63,6 @@ namespace tetris
         block[2] = preprocess("1000");
         block[1] = preprocess("1100");
         block[0] = preprocess("1000");
-        info("'" + item_id + "' piece created");
       }
       else if (item_id == "L1")
       {
@@ -74,7 +70,6 @@ namespace tetris
         block[2] = preprocess("1000");
         block[1] = preprocess("1000");
         block[0] = preprocess("1100");
-        info("'" + item_id + "' piece created");
       }
       else if (item_id == "L2")
       {
@@ -82,7 +77,6 @@ namespace tetris
         block[2] = preprocess("0000");
         block[1] = preprocess("1110");
         block[0] = preprocess("1000");
-        info("'" + item_id + "' piece created");
       }
       else if (item_id == "L3")
       {
@@ -90,7 +84,6 @@ namespace tetris
         block[2] = preprocess("1100");
         block[1] = preprocess("0100");
         block[0] = preprocess("0100");
-        info("'" + item_id + "' piece created");
       }
       else if (item_id == "L4")
       {
@@ -98,7 +91,6 @@ namespace tetris
         block[2] = preprocess("0000");
         block[1] = preprocess("0010");
         block[0] = preprocess("1110");
-        info("'" + item_id + "' piece created");
       }
       else if (item_id == "J1")
       {
@@ -106,7 +98,6 @@ namespace tetris
         block[2] = preprocess("0100");
         block[1] = preprocess("0100");
         block[0] = preprocess("1100");
-        info("'" + item_id + "' piece created");
       }
       else if (item_id == "J2")
       {
@@ -114,7 +105,6 @@ namespace tetris
         block[2] = preprocess("0000");
         block[1] = preprocess("1000");
         block[0] = preprocess("1110");
-        info("'" + item_id + "' piece created");
       }
       else if (item_id == "J3")
       {
@@ -122,7 +112,6 @@ namespace tetris
         block[2] = preprocess("1100");
         block[1] = preprocess("1000");
         block[0] = preprocess("1000");
-        info("'" + item_id + "' piece created");
       }
       else if (item_id == "J4")
       {
@@ -130,7 +119,6 @@ namespace tetris
         block[2] = preprocess("0000");
         block[1] = preprocess("1110");
         block[0] = preprocess("0010");
-        info("'" + item_id + "' piece created");
       }
       else if (item_id == "S1")
       {
@@ -138,7 +126,6 @@ namespace tetris
         block[2] = preprocess("0000");
         block[1] = preprocess("0110");
         block[0] = preprocess("1100");
-        info("'" + item_id + "' piece created");
       }
       else if (item_id == "S2")
       {
@@ -146,7 +133,6 @@ namespace tetris
         block[2] = preprocess("1000");
         block[1] = preprocess("1100");
         block[0] = preprocess("0100");
-        info("'" + item_id + "' piece created");
       }
       else if (item_id == "Z1")
       {
@@ -154,7 +140,6 @@ namespace tetris
         block[2] = preprocess("0000");
         block[1] = preprocess("1100");
         block[0] = preprocess("0110");
-        info("'" + item_id + "' piece created");
       }
       else if (item_id == "Z2")
       {
@@ -162,7 +147,6 @@ namespace tetris
         block[2] = preprocess("0100");
         block[1] = preprocess("1100");
         block[0] = preprocess("1000");
-        info("'" + item_id + "' piece created");
       }
       else if (item_id == "I1")
       {
@@ -170,7 +154,6 @@ namespace tetris
         block[2] = preprocess("1000");
         block[1] = preprocess("1000");
         block[0] = preprocess("1000");
-        info("'" + item_id + "' piece created");
       }
       else if (item_id == "I2")
       {
@@ -178,7 +161,6 @@ namespace tetris
         block[2] = preprocess("0000");
         block[1] = preprocess("0000");
         block[0] = preprocess("1111");
-        info("'" + item_id + "' piece created");
       }
       else if (item_id == "O")
       {
@@ -186,13 +168,13 @@ namespace tetris
         block[2] = preprocess("0000");
         block[1] = preprocess("1100");
         block[0] = preprocess("1100");
-        info("'" + item_id + "' piece created");
       }
       else
       {
         string str = "Failed to create Piece. Unknown item_id '" + item_id + "'.";
         throw str;
       }
+      info("'" + item_id + "' piece created");
     };
     const string get_ref_str() const
     {
