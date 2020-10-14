@@ -11,7 +11,7 @@
 #include "Type.h"
 
 // enable A_SOLUTION
-#define A_SOLUTION
+// #define A_SOLUTION
 
 extern const int maxn = 15 + 5;
 extern const int maxm = 40 + 5;

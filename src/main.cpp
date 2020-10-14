@@ -7,6 +7,8 @@
 #include "Piece.h"
 #include "Utils.h"
 
+// enable FINAL_SUBMIT
+#define FINAL_SUBMIT
 // enable A_SOLUTION
 // at "src/Board.h"
 // enable log messages
@@ -37,7 +39,9 @@ int main(int argc, char *argv[])
   // set I/O
   if (argc <= 1)
   {
-#if defined(A_SOLUTION)
+#if defined(FINAL_SUBMIT)
+    output_file_name = "108062308_proj1.final";
+#elif defined(A_SOLUTION)
     output_file_name = "output_A.final";
 #else
     output_file_name = "output.final";
@@ -79,7 +83,9 @@ int main(int argc, char *argv[])
     if (!(argc >= 3) && isInputFileEndWithData)
     {
       output_file_name = output_file_name.substr(0, output_file_name.length() - 5);
-#if defined(A_SOLUTION)
+#if defined(FINAL_SUBMIT)
+      output_file_name = "108062308_proj1.final";
+#elif defined(A_SOLUTION)
       output_file_name += "_A.final";
 #else
       output_file_name += ".final";
@@ -87,7 +93,9 @@ int main(int argc, char *argv[])
     }
     else
     {
-#if defined(A_SOLUTION)
+#if defined(FINAL_SUBMIT)
+      output_file_name = "108062308_proj1.final";
+#elif defined(A_SOLUTION)
       output_file_name += "_A.final";
 #else
       output_file_name += ".final";
@@ -130,7 +138,9 @@ int main(int argc, char *argv[])
     test(fout);
 
   fin.close();
+  info("input file " + input_file_name + " closed");
   fout.close();
+  info("output file " + output_file_name + " closed");
 
   return 0;
 }
@@ -193,11 +203,11 @@ int test(ofstream &fout)
     }
   }
 
-#if defined(VERBOSE)
   board.write_in_file(fout);
-#endif
 
+#if defined(VERBOSE)
   board.write_to_console();
+#endif
 
   return 0;
 }
