@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
   // set I/O
   if (argc <= 1)
   {
-    output_file_name = "output.txt";
+    output_file_name = "output.final";
 
     info("input manually");
     info("output file: " + output_file_name);
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
   else
   {
     input_file_name = argv[1];
-    output_file_name = argc >= 3 ? argv[2] : input_file_name + "_output.txt";
+    output_file_name = argc >= 3 ? argv[2] : input_file_name + ".final";
 
     info("input file: " + input_file_name);
     info("output file: " + output_file_name);
