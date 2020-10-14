@@ -9,7 +9,7 @@
 // enable A solution
 // #define A_SOLUTION
 // enable log messages
-// #define VERBOSE
+#define VERBOSE
 // enable debug mode
 // #define DEBUG_ENABLE
 
@@ -879,9 +879,9 @@ int test(ofstream &fout)
       // line falling & eliminating
       update_board(board);
     }
-    catch (string msg)
+    catch (string err_msg)
     {
-      error(msg);
+      error(err_msg);
       // return 1;
     }
   }
