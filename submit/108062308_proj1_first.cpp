@@ -6,8 +6,10 @@
 #include <utility>
 #include <stack>
 
-// enable info messages
-#define VERBOSE
+// enable A solution
+// #define A_SOLUTION
+// enable log messages
+// #define VERBOSE
 // enable debug mode
 // #define DEBUG_ENABLE
 
@@ -534,6 +536,7 @@ namespace tetris
         continue;
       }
 
+#if defined(A_SOLUTION)
       const bool can_fit_into = this->can_fit_into(line_idx, s.back());
       if (can_fit_into)
       {
@@ -550,6 +553,7 @@ namespace tetris
 
         continue;
       }
+#endif
 
       debug("push line '" + to_string(line_idx) + "'");
       s.push_back(line_idx);
@@ -726,41 +730,91 @@ int main(int argc, char *argv[])
   // set I/O
   if (argc <= 1)
   {
+#if defined(A_SOLUTION)
+    output_file_name = "output_A.final";
+#else
     output_file_name = "output.final";
+#endif
 
     info("input manually");
     info("output file: " + output_file_name);
 
     info("'cin.rdbuf' to 'cin'");
 
-    fout.open(output_file_name, ofstream::out);
-
-    if (!fout.is_open())
-      error("failed to open output file.");
+    try
+    {
+      fout.open(output_file_name, ofstream::out);
+      if (!fout.is_open())
+      {
+        string err_msg = "failed to open output file.";
+        throw err_msg;
+      }
+    }
+    catch (string err_msg)
+    {
+      error(err_msg);
+    }
 
     isInputFromFile = false;
   }
   else
   {
     input_file_name = argv[1];
-    output_file_name = (argc >= 3 ? argv[2] : input_file_name) + ".final";
+    output_file_name = (argc >= 3 ? argv[2] : input_file_name);
+
+    // if there is no output file and input file extension is ".data", then change to ".final". Otherwise, append ".final" directly.
+    bool isInputFileEndWithData = true;
+    for (int i = 0; i < 5; i++)
+    {
+      if (input_file_name[input_file_name.length() - 1 - i] != ".data"[4 - i])
+        isInputFileEndWithData = false;
+    }
+    if (!(argc >= 3) && isInputFileEndWithData)
+    {
+      output_file_name = output_file_name.substr(0, output_file_name.length() - 5);
+#if defined(A_SOLUTION)
+      output_file_name += "_A.final";
+#else
+      output_file_name += ".final";
+#endif
+    }
+    else
+    {
+#if defined(A_SOLUTION)
+      output_file_name += "_A.final";
+#else
+      output_file_name += ".final";
+#endif
+    }
 
     info("input file: " + input_file_name);
     info("output file: " + output_file_name);
 
-    fin.open(input_file_name, ifstream::in);
-    fout.open(output_file_name, ofstream::out);
-
-    if (!fin.is_open())
-      error("failed to open input file.");
-    else
+    try
     {
-      cin.rdbuf(fin.rdbuf());
-      info("'cin.rdbuf' from 'fin'");
-    }
+      fin.open(input_file_name, ifstream::in);
+      if (!fin.is_open())
+      {
+        string err_msg = "failed to open input file.";
+        throw err_msg;
+      }
+      else
+      {
+        cin.rdbuf(fin.rdbuf());
+        info("'cin.rdbuf' from 'fin'");
+      }
 
-    if (!fout.is_open())
-      error("failed to open output file.");
+      fout.open(output_file_name, ofstream::out);
+      if (!fout.is_open())
+      {
+        string err_msg = "failed to open output file.";
+        throw err_msg;
+      }
+    }
+    catch (string err_msg)
+    {
+      error(err_msg);
+    }
 
     isInputFromFile = true;
   }
