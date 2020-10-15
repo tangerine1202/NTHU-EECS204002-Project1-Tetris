@@ -11,7 +11,7 @@
 // enable A solution
 // #define A_SOLUTION
 // enable log messages
-#define VERBOSE
+// #define VERBOSE
 // enable debug mode
 // #define DEBUG_ENABLE
 
